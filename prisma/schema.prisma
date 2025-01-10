@@ -1,0 +1,84 @@
+datasource db {
+  provider = "postgresql" // or "mysql" | "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Enums
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  username    String   @unique
+  password    String
+  firstName   String?
+  lastName    String?
+  avatarUrl   String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  posts       Post[]
+  comments    Comment[]
+  messagesSent     Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
+  reactions   Reaction[]
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  content   String
+  mediaUrl  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  // Relations
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  reactions Reaction[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  postId   String
+  post     Post     @relation(fields: [postId], references: [id])
+  authorId String
+  author   User     @relation(fields: [authorId], references: [id])
+}
+
+model Reaction {
+  id        String       @id @default(uuid())
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  senderId   String
+  receiverId String
+  sender     User @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver   User @relation("MessagesReceived", fields: [receiverId], references: [id])
+}
